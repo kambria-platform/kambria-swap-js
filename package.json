@@ -4,8 +4,10 @@
   "description": "Generate and validate the constraint of ethAddress and bnbAddress",
   "main": "index.js",
   "scripts": {
-    "start": "nodemon main.js",
-    "test": "mocha"
+    "start": "",
+    "build": "npm run clean && babel src -d dist && babel main.js -o index.js",
+    "clean": "rm -rf index.js && rm -rf dist",
+    "test": "npm run build && mocha"
   },
   "repository": {
     "type": "git",
