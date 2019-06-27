@@ -1,132 +1,93 @@
-var bip39 = require('bip39');
-var hdkey = require('hdkey');
-var ethUtil = require('ethereumjs-util');
+var Mnemonic = require('./mnemonic');
+var Deriver = require('./deriver');
 var util = require('./util');
-
-const _default = require('./const');
 
 var Swap = function () { }
 
 /**
- * Generate a random Mnemonic
- * @function generateMnemonic
- * @param - 
+ * Generate Private Swap Key
+ * Please keep generate and keep it privately
+ * @function generatePrivteSwapKey
+ * @param network - Ethereum network id
+ * @param organization - Organization name
+ * @param passwork - (Optional) password
+ * @param isTwoWaySwap - Enable swap in 2 ways (ERC20 -> BEP2 and BEP2 -> ERC20)
  */
-Swap.generateMnemonic = function () {
-  let mnemonic = bip39.generateMnemonic();
-  return mnemonic;
-}
+Swap.generateSwapKey = function (network, organization, passwork, isTwoWaySwap) {
+  if (!parseInt(network)) throw new Error('Network should be a number');
+  if (!organization || typeof organization !== 'string') throw new Error('Organization should be a string');
+  if (passwork && typeof passwork !== 'string') throw new Error('Organization should be a string or empty');
 
-/**
- * Generate a root path
- * @function generateRootPath
- * @param networkId - Ethereum network ID, i.e, 4 for Rinkeby, 1 for Mainnet
- * @param orgnazationName - Organization name. For example: 'Kambria'
- */
-Swap.generateRootPath = function (networkId, orgnazationName) {
-  // Full path: m/<base>/<net>/<org>/<bnbAddressPath>
-  let organization = util.stringToPath(orgnazationName);
-  let path = {
-    base: _default.ETH_DERIVATION_PATH,
-    net: networkId,
-    org: organization,
-    concat: function (extraPath) {
-      let dpath = util.addDPath(util.addDPath(this.base, this.net), this.org);
-      if (extraPath) dpath = util.addDPath(dpath, extraPath);
-      return dpath;
+  let mnemonic = Mnemonic.generateMnemonic();
+  let rootPath = Deriver.generateRootPath(network, organization);
+
+  let PrivateSwapKey = null;
+  if (isTwoWaySwap) {
+    PrivateSwapKey = {
+      mnemonic: mnemonic,
+      network: network,
+      organization: organization,
+      isTwoWaySwap: true
+    }
+  } else {
+    PrivateSwapKey = {
+      network: network,
+      organization: organization,
+      isTwoWaySwap: false
     }
   }
-  return path;
+  let PublicSwapKey = Deriver.generateSecureRootNode(mnemonic, passwork, rootPath);
+  return { PrivateSwapKey, PublicSwapKey }
 }
 
 /**
- * Generate a root node
- * Because this function will include private key of root node
- * So you must manually delete private key before publication.
- * You must only use it when you are in intention of 2-way swap.
- * @function generateRootNode
- * @param mnemonic - Mnemonic
- * @param passwork - Passwork. It should be null to ignore.
- * @param rootPath - rootPath object
+ * Generate swap key from private swap key
+ * @function privateSwapKeyToSwapKey
+ * @param privateSwapKey - Public swap key
  */
-Swap.generateRootNode = function (mnemonic, passwork, rootPath) {
-  console.warn(`
-    You should use this function in BEP2-ERC20 swap.
-    If you plan to do ERC20-BEP2 swap, please use generateSecureRootNode instead.
-  `);
-  let seed = bip39.mnemonicToSeedSync(mnemonic, passwork);
-  let master = hdkey.fromMasterSeed(seed);
-  if (typeof rootPath === 'object') rootPath = rootPath.concat();
-  let root = master.derive(rootPath);
-  return root;
+Swap.privateSwapKeyToSwapKey = function (privateSwapKey, passwork) {
+  if (!privateSwapKey) throw new Error('Invalid private swap key');
+  if (typeof privateSwapKey !== 'object') try {
+    privateSwapKey = JSON.parse(privateSwapKey);
+  } catch (er) { if (er) throw new Error('Invalid private swap key'); }
+
+  let { mnemonic, network, organization, isTwoWaySwap } = privateSwapKey;
+  if (!parseInt(network)) throw new Error('Invalid private swap key');
+  if (!organization || typeof organization !== 'string') throw new Error('Invalid private swap key');
+  if (passwork && typeof passwork !== 'string') throw new Error('Invalid private swap key');
+  if (mnemonic && !isTwoWaySwap) throw new Error('Invalid private swap key');
+  if (!mnemonic && isTwoWaySwap) throw new Error('Invalid private swap key');
+
+  let rootPath = Deriver.generateRootPath(network, organization);
+  let PublicSwapKey = Deriver.generateSecureRootNode(mnemonic, passwork, rootPath);
+  return { PrivateSwapKey: privateSwapKey, PublicSwapKey }
 }
 
 /**
- * Generate a deposite node
- * Because this function will include private key of deposit node
- * So you must manually delete private key before publication.
- * You must only use it when you are in intention of 2-way swap.
- * @function generateDepositNode
- * @param root - root node
- * @param bnbAddress - BNB Address
+ * Generate ETH deposit key by BNB address user provided
+ * @function generateEthDepositKey
+ * @param publicSwapKey - Public swap key
+ * @param bnbAddr - BNB address
  */
-Swap.generateDepositNode = function (root, bnbAddress) {
-  console.warn(`
-    You should use this function in BEP2-ERC20 swap.
-    If you plan to do ERC20-BEP2 swap, please use generateDepositSecureNode instead.
-  `);
-  let dpath = util.stringToPath(bnbAddress);
-  let child = root.derive(util.addDPath('m/', dpath));
-  return child;
+Swap.generateEthDepositKey = function (publicSwapKey, bnbAddr) {
+  if (!publicSwapKey || typeof publicSwapKey !== 'object') throw new Error('Invalid public swap key');
+  if (!publicSwapKey.publicKey || !publicSwapKey.chainCode) throw new Error('Invalid public swap key');
+  if (!util.isValidBnbAddress(bnbAddr)) throw new Error('Invalid BNB address');
+
+  return Deriver.generateSecureDepositNode(publicSwapKey, bnbAddr);
 }
 
 /**
- * Securely generate a root node
- * We strongly recommend to use this function
- * @function generateSecureRootNode
- * @param mnemonic - Mnemonic
- * @param passwork - Passwork. It should be null to ignore.
- * @param rootPath - rootPath object
+ * Validate ETH deposit key
+ * @function validateEthDepositKey
+ * @param publicSwapKey - Public swap key
+ * @param bnbAddr - BNB address
  */
-Swap.generateSecureRootNode = function (mnemonic, passwork, rootPath) {
-  let seed = bip39.mnemonicToSeedSync(mnemonic, passwork);
-  let master = hdkey.fromMasterSeed(seed);
-  if (typeof rootPath === 'object') rootPath = rootPath.concat();
-  let root = master.derive(rootPath);
-  delete root._privateKey;
-  return { publicKey: root.publicKey, chainCode: root.chainCode };
-}
+Swap.validateEthDepositKey = function (publicSwapKey, ethDepositKey) {
+  if (!publicSwapKey || typeof publicSwapKey !== 'object') throw new Error('Invalid public swap key');
+  if (!ethDepositKey || typeof ethDepositKey !== 'object') throw new Error('Invalid eth deposit key');
 
-/**
- * Securely generate a deposite node
- * We strongly recommend to use this function
- * @function generateSecureDepositNode
- * @param root - root node generated by generateSecureRootNode
- * @param bnbAddress - BNB Address
- */
-Swap.generateSecureDepositNode = function (root, bnbAddress) {
-  let bnbAddressPath = util.stringToPath(bnbAddress);
-  let child = util.deriveChild(root.publicKey, root.chainCode, bnbAddressPath);
-  let address = ethUtil.bufferToHex(ethUtil.pubToAddress(child.publicKey, true));
-  return {
-    bnbAddress: bnbAddress,
-    dpath: bnbAddressPath,
-    ethAddress: address
-  }
-}
-
-/**
- * Validate deposit node
- * @function validateSecureDepositNode
- * @param depositNode - the deposit node returned by generateSecureDepositNode
- */
-Swap.validateSecureDepositNode = function (root, depositNode) {
-  let validDepositNode = Swap.generateSecureDepositNode(root, depositNode.bnbAddress);
-  let keys = Object.keys(validDepositNode);
-  for (let i = 0; i < keys.length; i++) {
-    if (validDepositNode[keys[i]] !== depositNode[keys[i]]) return false;
-  }
-  return true;
+  return Deriver.validateSecureDepositNode(publicSwapKey, ethDepositKey);
 }
 
 module.exports = Swap;

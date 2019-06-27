@@ -1,6 +1,7 @@
 var BN = require('bn.js');
 var HDKey = require('hdkey');
 var ethUtil = require('ethereumjs-util');
+var bech32 = require('bech32');
 
 var Util = function () { }
 
@@ -68,6 +69,22 @@ Util.deriveChild = function (publicKey, chainCode, dpath) {
   hdKey.chainCode = chainCode;
   let child = hdKey.derive(Util.addDPath('m/', dpath));
   return child;
+}
+
+Util.isValidEthAddress = function (ethAddr) {
+  return ethUtil.isValidAddress(ethAddr);
+}
+
+Util.isValidBnbAddress = function (bnbAddr) {
+  try {
+    let decode = bech32.decode(bnbAddr);
+    if (!decode || !decode.prefix || !decode.words) throw new Error('Invalid BNB address');
+    if (decode.prefix !== 'tbnb' && decode.prefix !== 'bnb') throw new Error('Invalid BNB address');
+    if (decode.words.length !== 32) throw new Error('Invalid BNB address');
+  } catch (er) {
+    if (er) return false;
+  }
+  return true;
 }
 
 module.exports = Util;

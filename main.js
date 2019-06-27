@@ -1,3 +1,3 @@
-var Swap = require('./dist');
+var swap = require('./dist');
 
-module.exports = Swap;
+module.exports = swap;
