@@ -85,7 +85,7 @@ Deriver.generateSecureRootNode = function (mnemonic, passwork, rootPath) {
   if (typeof rootPath === 'object') rootPath = rootPath.concat();
   let root = master.derive(rootPath);
   delete root._privateKey;
-  return { publicKey: root.publicKey, chainCode: root.chainCode };
+  return { publicKey: ethUtil.bufferToHex(root.publicKey), chainCode: ethUtil.bufferToHex(root.chainCode) };
 }
 
 /**
