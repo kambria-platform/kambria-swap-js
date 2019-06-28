@@ -21,12 +21,12 @@ Crypto.hash = function (...params) {
 }
 
 Crypto.encrypt = function (plaintext, password) {
-  if (!plaintext || typeof plaintext !== 'string') throw new Error('Plaintext must be string');
-  if (!password || typeof password !== 'string') throw new Error('Password must be string');
+  if (!plaintext || typeof plaintext !== 'string') return new Error('Plaintext must be string');
+  if (!password || typeof password !== 'string') return new Error('Password must be string');
   
   let salt = cryptoJS.lib.WordArray.random(128 / 8).toString();
   let passphrase = Crypto.constructPassword(password, salt);
-  if (!passphrase) return null;
+  if (!passphrase) return new Error('Cannot contruct password');
 
   let ciphertext = cryptoJS.AES.encrypt(plaintext, passphrase).toString();
   let hash = Crypto.hash(ciphertext, salt);
@@ -42,11 +42,11 @@ Crypto.validate = function (cipherObj) {
 
 Crypto.decrypt = function (cipherObj, password) {
   let { salt, ciphertext, hash } = cipherObj;
-  if (!salt || !ciphertext || !hash) return null;
-  if (!Crypto.validate(cipherObj)) return null;
+  if (!salt || !ciphertext || !hash) return new Error('Invalid params');
+  if (!Crypto.validate(cipherObj)) return new Error('Invalid signature');
   let passphrase = Crypto.constructPassword(password, salt);
   let plaintext = cryptoJS.AES.decrypt(ciphertext, passphrase);
-  if (!plaintext) return null;
+  if (!plaintext) return new Error('Cannot decrypt ciphertext');
   plaintext = plaintext.toString(cryptoJS.enc.Utf8);
   return plaintext;
 }

@@ -15,11 +15,11 @@ var Swap = function () { }
  * @param isTwoWaySwap - Enable swap in 2-ways (ERC20 -> BEP2 and BEP2 -> ERC20)
  */
 Swap.generateSwapKey = function (network, organization, password, isTwoWaySwap) {
-  if (!parseInt(network)) throw new Error('Network should be a number');
-  if (!organization || typeof organization !== 'string') throw new Error('Organization should be a string');
+  if (!parseInt(network)) return new Error('Network should be a number');
+  if (!organization || typeof organization !== 'string') return new Error('Organization should be a string');
 
   isTwoWaySwap = Boolean(isTwoWaySwap);
-  if (isTwoWaySwap && (!password || typeof password !== 'string')) throw new Error('Password required');
+  if (isTwoWaySwap && (!password || typeof password !== 'string')) return new Error('Password required');
 
   let mnemonicObj = MnemonicObj.generateMnemonicObj();
   let rootPath = Deriver.generateRootPath(network, organization);
@@ -45,24 +45,24 @@ Swap.generateSwapKey = function (network, organization, password, isTwoWaySwap) 
  * @param password - Password
  */
 Swap.encryptedPrivateSwapKeyToSwapKey = function (encryptedPrivateSwapKey, password) {
-  if (!encryptedPrivateSwapKey) throw new Error('Invalid encrypted private swap key');
+  if (!encryptedPrivateSwapKey) return new Error('Invalid encrypted private swap key');
   if (typeof encryptedPrivateSwapKey !== 'object') try {
     encryptedPrivateSwapKey = JSON.parse(encryptedPrivateSwapKey);
-  } catch (er) { if (er) throw new Error('Invalid encrypted private swap key'); }
+  } catch (er) { if (er) return new Error('Invalid encrypted private swap key'); }
 
   let privateSwapKey = Crypto.decrypt(encryptedPrivateSwapKey, password);
-  if (!privateSwapKey) throw new Error('Invalid encrypted private swap key');
+  if (!privateSwapKey) return new Error('Invalid encrypted private swap key');
   if (typeof privateSwapKey !== 'object') try {
     privateSwapKey = JSON.parse(privateSwapKey);
-  } catch (er) { if (er) throw new Error('Invalid private swap key'); }
+  } catch (er) { if (er) return new Error('Invalid private swap key'); }
 
   let { mnemonicObj, network, organization, isTwoWaySwap } = privateSwapKey;
-  if (!parseInt(network)) throw new Error('Invalid private swap key');
-  if (!organization || typeof organization !== 'string') throw new Error('Invalid private swap key');
-  if (!isTwoWaySwap || typeof isTwoWaySwap !== 'boolean') throw new Error('Invalid private swap key');
-  if (!mnemonicObj || typeof mnemonicObj !== 'object') throw new Error('Invalid private swap key');
-  if (!mnemonicObj.mnemonic || typeof mnemonicObj.mnemonic !== 'string') throw new Error('Invalid private swap key');
-  if (!mnemonicObj.salt || typeof mnemonicObj.salt !== 'string') throw new Error('Invalid private swap key');
+  if (!parseInt(network)) return new Error('Invalid private swap key');
+  if (!organization || typeof organization !== 'string') return new Error('Invalid private swap key');
+  if (!isTwoWaySwap || typeof isTwoWaySwap !== 'boolean') return new Error('Invalid private swap key');
+  if (!mnemonicObj || typeof mnemonicObj !== 'object') return new Error('Invalid private swap key');
+  if (!mnemonicObj.mnemonic || typeof mnemonicObj.mnemonic !== 'string') return new Error('Invalid private swap key');
+  if (!mnemonicObj.salt || typeof mnemonicObj.salt !== 'string') return new Error('Invalid private swap key');
 
   let common = { network, organization, isTwoWaySwap }
   let rootPath = Deriver.generateRootPath(network, organization);
@@ -78,15 +78,15 @@ Swap.encryptedPrivateSwapKeyToSwapKey = function (encryptedPrivateSwapKey, passw
  * @param bnbAddr - BNB address
  */
 Swap.generateEthDepositKey = function (publicSwapKey, bnbAddr) {
-  if (!publicSwapKey) throw new Error('Invalid public swap key');
+  if (!publicSwapKey) return new Error('Invalid public swap key');
   if (typeof publicSwapKey !== 'object') try {
     publicSwapKey = JSON.parse(publicSwapKey);
-  } catch (er) { if (er) throw new Error('Invalid public swap key'); }
+  } catch (er) { if (er) return new Error('Invalid public swap key'); }
 
   let { publicKey, chainCode } = publicSwapKey;
-  if (!publicKey || typeof publicKey !== 'string') throw new Error('Invalid public swap key');
-  if (!chainCode || typeof chainCode !== 'string') throw new Error('Invalid public swap key');
-  if (!util.isValidBnbAddress(bnbAddr)) throw new Error('Invalid BNB address');
+  if (!publicKey || typeof publicKey !== 'string') return new Error('Invalid public swap key');
+  if (!chainCode || typeof chainCode !== 'string') return new Error('Invalid public swap key');
+  if (!util.isValidBnbAddress(bnbAddr)) return new Error('Invalid BNB address');
 
   return Deriver.generateSecureDepositNode(publicSwapKey, bnbAddr);
 }

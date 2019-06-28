@@ -1,6 +1,6 @@
 {
   "name": "kambria-swap-js",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "Generate and validate the constraint of ethAddress and bnbAddress",
   "main": "index.js",
   "scripts": {
