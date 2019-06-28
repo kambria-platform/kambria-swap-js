@@ -1,9 +1,9 @@
 var assert = require('assert');
 var ethUtil = require('ethereumjs-util');
-var Mnemonic = require('../dist/mnemonic');
+var MnemonicObj = require('../dist/mnemonicObj');
 var Deriver = require('../dist/deriver');
 
-const { organization, network, bnbAddress, passwork } = require('./params');
+const { organization, network, bnbAddress } = require('./params');
 
 
 describe('Deriver library', function () {
@@ -11,10 +11,10 @@ describe('Deriver library', function () {
   describe('Test validateSecureDepositNode()', function () {
     it(`Should be a valid deposit node`, function () {
       // Private config
-      let mnemonic = Mnemonic.generateMnemonic();
+      let mnemonicObj = MnemonicObj.generateMnemonicObj();
       // Public config
       let rootPath = Deriver.generateRootPath(network, organization);
-      let secureRoot = Deriver.generateSecureRootNode(mnemonic, passwork, rootPath);
+      let secureRoot = Deriver.generateSecureRootNode(mnemonicObj, rootPath);
       // User functions
       let secureNode = Deriver.generateSecureDepositNode(secureRoot, bnbAddress);
 
@@ -23,10 +23,10 @@ describe('Deriver library', function () {
 
     it(`Should be an invalid deposit node`, function () {
       // Private config
-      let mnemonic = Mnemonic.generateMnemonic();;
+      let mnemonicObj = MnemonicObj.generateMnemonicObj();
       // Public config
       let rootPath = Deriver.generateRootPath(network, organization);
-      let secureRoot = Deriver.generateSecureRootNode(mnemonic, passwork, rootPath);
+      let secureRoot = Deriver.generateSecureRootNode(mnemonicObj, rootPath);
       // User functions
       let secureNode = Deriver.generateSecureDepositNode(secureRoot, bnbAddress);
       secureNode.bnbAddress = 'tbnb175ehva8cwvm0ndcf27nh8ylld0lsk8nk87rns3'; // Try to incorrect the deposit node
@@ -38,15 +38,15 @@ describe('Deriver library', function () {
   describe('Test generateSecureDepositNode() and generateDepositNode()', function () {
     it(`Should be the same addresses`, function () {
       // Private config
-      let mnemonic = Mnemonic.generateMnemonic();
+      let mnemonicObj = MnemonicObj.generateMnemonicObj();
       // Public config
       let rootPath = Deriver.generateRootPath(network, organization);
-      let secureRoot = Deriver.generateSecureRootNode(mnemonic, passwork, rootPath);
+      let secureRoot = Deriver.generateSecureRootNode(mnemonicObj, rootPath);
       // User functions
       let secureNode = Deriver.generateSecureDepositNode(secureRoot, bnbAddress);
       let secureAddress = secureNode.ethAddress;
       // Test
-      let unsecureRoot = Deriver.generateRootNode(mnemonic, passwork, rootPath);
+      let unsecureRoot = Deriver.generateRootNode(mnemonicObj, rootPath);
       let unsecureNode = Deriver.generateDepositNode(unsecureRoot, bnbAddress);
       let unsecureAddress = ethUtil.bufferToHex(ethUtil.pubToAddress(unsecureNode.publicKey, true));
 

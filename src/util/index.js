@@ -1,4 +1,3 @@
-var BN = require('bn.js');
 var HDKey = require('hdkey');
 var ethUtil = require('ethereumjs-util');
 var bech32 = require('bech32');
@@ -19,11 +18,12 @@ Util.unpadHex = function (hex) {
 }
 
 Util.stringToPath = function (organization) {
-  let int = new BN(ethUtil.keccak256(organization)).toString(10).split('');
+  let int = new ethUtil.BN(ethUtil.keccak256(organization)).toString(10);
   return Util.intToPath(int);
 }
 
 Util.intToPath = function (int) {
+  int = int.split('');
   let organizationPath = '';
   while (int.length) {
     let re = '';

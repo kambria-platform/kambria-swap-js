@@ -1,6 +1,6 @@
 var hdkey = require('hdkey');
 var ethUtil = require('ethereumjs-util');
-var Mnemonic = require('../mnemonic');
+var MnemonicObj = require('../mnemonicObj');
 var util = require('../util');
 
 const { ETH_DERIVATION_PATH } = require('./const');
@@ -36,16 +36,15 @@ Deriver.generateRootPath = function (networkId, orgnazationName) {
  * So you must manually delete private key before publication.
  * You must only use it when you are in intention of 2-way swap.
  * @function generateRootNode
- * @param mnemonic - Mnemonic
- * @param passwork - Passwork. It should be null to ignore.
+ * @param mnemonicObj - Mnemonic Object
  * @param rootPath - rootPath object
  */
-Deriver.generateRootNode = function (mnemonic, passwork, rootPath) {
+Deriver.generateRootNode = function (mnemonicObj, rootPath) {
   console.warn(`
     You should use this function in BEP2-ERC20 swap.
     If you plan to do ERC20-BEP2 swap, please use generateSecureRootNode instead.
   `);
-  let seed = Mnemonic.mnemonicToSeed(mnemonic, passwork);
+  let seed = MnemonicObj.mnemonicObjToSeed(mnemonicObj);
   let master = hdkey.fromMasterSeed(seed);
   if (typeof rootPath === 'object') rootPath = rootPath.concat();
   let root = master.derive(rootPath);
@@ -75,17 +74,19 @@ Deriver.generateDepositNode = function (root, bnbAddress) {
  * Securely generate a root node
  * We strongly recommend to use this function
  * @function generateSecureRootNode
- * @param mnemonic - Mnemonic
- * @param passwork - Passwork. It should be null to ignore.
+ * @param mnemonicObj - Mnemonic Object
  * @param rootPath - rootPath object
  */
-Deriver.generateSecureRootNode = function (mnemonic, passwork, rootPath) {
-  let seed = Mnemonic.mnemonicToSeed(mnemonic, passwork);
+Deriver.generateSecureRootNode = function (mnemonicObj, rootPath) {
+  let seed = MnemonicObj.mnemonicObjToSeed(mnemonicObj);
   let master = hdkey.fromMasterSeed(seed);
   if (typeof rootPath === 'object') rootPath = rootPath.concat();
   let root = master.derive(rootPath);
   delete root._privateKey;
-  return { publicKey: ethUtil.bufferToHex(root.publicKey), chainCode: ethUtil.bufferToHex(root.chainCode) };
+  return {
+    publicKey: ethUtil.bufferToHex(root.publicKey),
+    chainCode: ethUtil.bufferToHex(root.chainCode)
+  };
 }
 
 /**

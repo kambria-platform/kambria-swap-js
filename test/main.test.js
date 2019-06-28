@@ -1,38 +1,34 @@
 var assert = require('assert');
 var util = require('../dist/util');
-var Mnemonic = require('../dist/mnemonic');
+var Crypto = require('../dist/crypto');
 var swap = require('../index.js');
 
-const { organization, network, bnbAddress, passwork } = require('./params');
+const { organization, network, bnbAddress, password } = require('./params');
 
 
 describe('Main source (Swap library)', function () {
 
   describe('Test generateSwapKey()', function () {
-    it('Should be valid mnemonic', function () {
+    it('Should be valid private swap key', function () {
       let isTwoWaySwap = true;
-      let SwapKey = swap.generateSwapKey(network, organization, passwork, isTwoWaySwap);
-      let mnemonic = SwapKey.PrivateSwapKey.mnemonic;
+      let SwapKey = swap.generateSwapKey(network, organization, password, isTwoWaySwap);
 
-      assert.strictEqual(Mnemonic.validateMnemonic(mnemonic), true, 'Invalid swap key');
+      assert.strictEqual(Crypto.validate(SwapKey.EncryptedPrivateSwapKey), true, 'Invalid swap key');
     });
 
-    it('Should be invalid (empty) mnemonic', function () {
+    it('Should be emppty private swap key', function () {
       let isTwoWaySwap = false;
-      let SwapKey = swap.generateSwapKey(network, organization, passwork, isTwoWaySwap);
-      let mnemonic = SwapKey.PrivateSwapKey.mnemonic;
+      let SwapKey = swap.generateSwapKey(network, organization, password, isTwoWaySwap);
 
-      assert.equal(mnemonic, null, 'Invalid swap key');
-      assert.strictEqual(Mnemonic.validateMnemonic(mnemonic), false, 'Invalid swap key');
+      assert.equal(SwapKey.EncryptedPrivateSwapKey, null, 'Invalid swap key');
     });
   });
 
-  describe('Test privateSwapKeyToSwapKey()', function () {
+  describe('Test encryptedPrivateSwapKeyToSwapKey()', function () {
     it('Should be valid swap key', function () {
       let isTwoWaySwap = true;
-      let SwapKey = swap.generateSwapKey(network, organization, passwork, isTwoWaySwap);
-      let PrivateSwapKey = SwapKey.PrivateSwapKey;
-      let newSwapKey = swap.privateSwapKeyToSwapKey(PrivateSwapKey, passwork);
+      let SwapKey = swap.generateSwapKey(network, organization, password, isTwoWaySwap);
+      let newSwapKey = swap.encryptedPrivateSwapKeyToSwapKey(SwapKey.EncryptedPrivateSwapKey, password);
       assert.deepEqual(SwapKey, newSwapKey, 'Invalid swap key');
     });
   });
@@ -40,7 +36,7 @@ describe('Main source (Swap library)', function () {
   describe('Test generateEthDepositKey()', function () {
     it('Should be a valid deposit key', function () {
       let isTwoWaySwap = false;
-      let SwapKey = swap.generateSwapKey(network, organization, passwork, isTwoWaySwap);
+      let SwapKey = swap.generateSwapKey(network, organization, password, isTwoWaySwap);
       let PublicSwapKey = SwapKey.PublicSwapKey;
       let ethDepositKey = swap.generateEthDepositKey(PublicSwapKey, bnbAddress);
 
@@ -51,7 +47,7 @@ describe('Main source (Swap library)', function () {
 
     it('Should be an invalid deposit key', function () {
       let isTwoWaySwap = false;
-      let SwapKey = swap.generateSwapKey(network, organization, passwork, isTwoWaySwap);
+      let SwapKey = swap.generateSwapKey(network, organization, password, isTwoWaySwap);
       let PublicSwapKey = SwapKey.PublicSwapKey;
       let ethDepositKey = swap.generateEthDepositKey(PublicSwapKey, bnbAddress);
       ethDepositKey.bnbAddress = 'tbnb175ehva8cwvm0ndcf27nh8ylld0lsk8nk87rns3'; // Try to incorrect the deposit node
