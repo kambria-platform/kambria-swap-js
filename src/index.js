@@ -34,6 +34,7 @@ Swap.generateSwapKey = function (network, organization, password, isTwoWaySwap) 
   // Encrypted private swap key
   let EncryptedPrivateSwapKey = null;
   if (PrivateSwapKey) EncryptedPrivateSwapKey = Crypto.encrypt(JSON.stringify(PrivateSwapKey), password);
+  if (EncryptedPrivateSwapKey instanceof Error) return new Error(EncryptedPrivateSwapKey.message);
 
   return { EncryptedPrivateSwapKey, PublicSwapKey }
 }
@@ -51,18 +52,19 @@ Swap.encryptedPrivateSwapKeyToSwapKey = function (encryptedPrivateSwapKey, passw
   } catch (er) { if (er) return new Error('Invalid encrypted private swap key'); }
 
   let privateSwapKey = Crypto.decrypt(encryptedPrivateSwapKey, password);
+  if (privateSwapKey instanceof Error) return new Error(privateSwapKey.message);
   if (!privateSwapKey) return new Error('Invalid encrypted private swap key');
   if (typeof privateSwapKey !== 'object') try {
     privateSwapKey = JSON.parse(privateSwapKey);
-  } catch (er) { if (er) return new Error('Invalid private swap key'); }
+  } catch (er) { if (er) return new Error('Invalid encrypted private swap key'); }
 
   let { mnemonicObj, network, organization, isTwoWaySwap } = privateSwapKey;
-  if (!parseInt(network)) return new Error('Invalid private swap key');
-  if (!organization || typeof organization !== 'string') return new Error('Invalid private swap key');
-  if (!isTwoWaySwap || typeof isTwoWaySwap !== 'boolean') return new Error('Invalid private swap key');
-  if (!mnemonicObj || typeof mnemonicObj !== 'object') return new Error('Invalid private swap key');
-  if (!mnemonicObj.mnemonic || typeof mnemonicObj.mnemonic !== 'string') return new Error('Invalid private swap key');
-  if (!mnemonicObj.salt || typeof mnemonicObj.salt !== 'string') return new Error('Invalid private swap key');
+  if (!parseInt(network)) return new Error('Invalid encrypted private swap key');
+  if (!organization || typeof organization !== 'string') return new Error('Invalid encrypted private swap key');
+  if (!isTwoWaySwap || typeof isTwoWaySwap !== 'boolean') return new Error('Invalid encrypted private swap key');
+  if (!mnemonicObj || typeof mnemonicObj !== 'object') return new Error('Invalid encrypted private swap key');
+  if (!mnemonicObj.mnemonic || typeof mnemonicObj.mnemonic !== 'string') return new Error('Invalid encrypted private swap key');
+  if (!mnemonicObj.salt || typeof mnemonicObj.salt !== 'string') return new Error('Invalid encrypted private swap key');
 
   let common = { network, organization, isTwoWaySwap }
   let rootPath = Deriver.generateRootPath(network, organization);
