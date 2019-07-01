@@ -23,7 +23,7 @@ Crypto.hash = function (...params) {
 Crypto.encrypt = function (plaintext, password) {
   if (!plaintext || typeof plaintext !== 'string') return new Error('Plaintext must be string');
   if (!password || typeof password !== 'string') return new Error('Password must be string');
-  
+
   let salt = cryptoJS.lib.WordArray.random(128 / 8).toString();
   let passphrase = Crypto.constructPassword(password, salt);
   if (!passphrase) return new Error('Cannot contruct password');
@@ -47,7 +47,11 @@ Crypto.decrypt = function (cipherObj, password) {
   let passphrase = Crypto.constructPassword(password, salt);
   let plaintext = cryptoJS.AES.decrypt(ciphertext, passphrase);
   if (!plaintext) return new Error('Cannot decrypt ciphertext');
-  plaintext = plaintext.toString(cryptoJS.enc.Utf8);
+  try {
+    plaintext = plaintext.toString(cryptoJS.enc.Utf8);
+  } catch (er) {
+    return new Error('Invalid password');
+  }
   return plaintext;
 }
 
