@@ -37,9 +37,9 @@ class Swap {
     if (!validator.validateEthOpts(ethOpts)) throw new Error('Invalid Ethereum options');
     if (!validator.validateBnbOpts(bnbOpts)) throw new Error('Invalid Binance options');
 
-    this.publicSwapkey = publicSwapkey;
-    this.ethOpts = ethOpts;
-    this.bnbOpts = bnbOpts;
+    this.publicSwapkey = { ...publicSwapkey };
+    this.ethOpts = { ...ethOpts };
+    this.bnbOpts = { ...bnbOpts };
     this.ethOpts.token.decimals = new BN('1' + '0'.repeat(this.ethOpts.token.decimals));
     this.bnbOpts.token.decimals = new BN('1' + '0'.repeat(this.bnbOpts.token.decimals));
     this.ethOpts.minimum = new BN(this.ethOpts.minimum ? this.ethOpts.minimum : 0);
