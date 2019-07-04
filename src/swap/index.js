@@ -54,6 +54,7 @@ class Swap {
       let web3 = new Web3(providerEngine);
       const ethTx = web3.eth.getTransaction(ethTxId);
       // Check token transaction
+      if (!ethTx) return reject('The transaction is not confirmed');
       if (!ethTx.input) return reject('The transaction is not transfer transaction');
       // Check type of token
       if (ethTx.to != this.ethOpts.token.address.toLowerCase()) return reject('The transaction transfers incorrect type of token');
