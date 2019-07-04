@@ -93,7 +93,7 @@ class Swap {
             amount: decode[1]
           },
           bnbTx: {
-            hash: re.result[0].hash,
+            hash: re.result[0].hash.toLowerCase(),
             from: this.bnbOpts.coinbase.address,
             to: ethDepositKey.bnbAddress,
             amount: rawAmount.mul(this.bnbOpts.token.decimals)
