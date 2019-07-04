@@ -85,7 +85,20 @@ class Swap {
           `Swap ${ethDepositKey.ethAddress} ${ethTxId}`
         );
       }).then(re => {
-        return resolve(re);
+        return resolve({
+          ethTx: {
+            hash: ethTxId,
+            from: ethTx.from,
+            to: ethAddress,
+            amount: decode[1]
+          },
+          bnbTx: {
+            hash: re.result[0].hash,
+            from: this.bnbOpts.coinbase.address,
+            to: ethDepositKey.bnbAddress,
+            amount: rawAmount.mul(this.bnbOpts.token.decimals)
+          }
+        });
       }).catch(er => {
         return reject(er);
       });
