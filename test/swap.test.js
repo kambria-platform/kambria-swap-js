@@ -1,6 +1,4 @@
-var assert = require('assert');
-var key = require('../dist/key');
-var Swap = require('../dist/swap');
+var { Key, Swap } = require('../index.js');
 
 const { bnbAddress, publicSwapKey, ethOpts, bnbOpts, depositTx } = require('./params');
 
@@ -11,7 +9,7 @@ describe('Swap library', function () {
   describe('Test swap()', function () {
     it('Should be valid swap', function (done) {
       let swap = new Swap(publicSwapKey, ethOpts, bnbOpts);
-      let ethDepositKey = key.generateEthDepositKey(publicSwapKey, bnbAddress);
+      let ethDepositKey = Key.generateEthDepositKey(publicSwapKey, bnbAddress);
       swap.swap(depositTx, ethDepositKey).then(tx => {
         return done();
       }).catch(er => {
