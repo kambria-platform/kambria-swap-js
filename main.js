@@ -1,3 +1,4 @@
-var swap = require('./dist');
+var key = require('./dist/key');
+var swap = require('./dist/swap');
 
-module.exports = swap;
+module.exports = { key, swap };

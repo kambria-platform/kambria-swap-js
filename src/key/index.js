@@ -1,9 +1,9 @@
-var MnemonicObj = require('./mnemonicObj');
-var Crypto = require('./crypto');
-var Deriver = require('./deriver');
-var util = require('./util');
+var MnemonicObj = require('../mnemonicObj');
+var Crypto = require('../crypto');
+var Deriver = require('../deriver');
+var util = require('../util');
 
-var Swap = function () { }
+var Key = function () { }
 
 /**
  * Generate Private Swap Key
@@ -14,7 +14,7 @@ var Swap = function () { }
  * @param password - Password required in 2-ways swap
  * @param isTwoWaySwap - Enable swap in 2-ways (ERC20 -> BEP2 and BEP2 -> ERC20)
  */
-Swap.generateSwapKey = function (network, organization, password, isTwoWaySwap) {
+Key.generateSwapKey = function (network, organization, password, isTwoWaySwap) {
   if (!parseInt(network)) return new Error('Network should be a number');
   if (!organization || typeof organization !== 'string') return new Error('Organization should be a string');
 
@@ -45,7 +45,7 @@ Swap.generateSwapKey = function (network, organization, password, isTwoWaySwap) 
  * @param encryptedPrivateSwapKey - Encrypted private swap key
  * @param password - Password
  */
-Swap.encryptedPrivateSwapKeyToSwapKey = function (encryptedPrivateSwapKey, password) {
+Key.encryptedPrivateSwapKeyToSwapKey = function (encryptedPrivateSwapKey, password) {
   if (!encryptedPrivateSwapKey) return new Error('Invalid encrypted private swap key');
   if (typeof encryptedPrivateSwapKey !== 'object') try {
     encryptedPrivateSwapKey = JSON.parse(encryptedPrivateSwapKey);
@@ -79,7 +79,7 @@ Swap.encryptedPrivateSwapKeyToSwapKey = function (encryptedPrivateSwapKey, passw
  * @param publicSwapKey - Public swap key
  * @param bnbAddr - BNB address
  */
-Swap.generateEthDepositKey = function (publicSwapKey, bnbAddr) {
+Key.generateEthDepositKey = function (publicSwapKey, bnbAddr) {
   if (!publicSwapKey) return new Error('Invalid public swap key');
   if (typeof publicSwapKey !== 'object') try {
     publicSwapKey = JSON.parse(publicSwapKey);
@@ -99,7 +99,7 @@ Swap.generateEthDepositKey = function (publicSwapKey, bnbAddr) {
  * @param publicSwapKey - Public swap key
  * @param bnbAddr - BNB address
  */
-Swap.validateEthDepositKey = function (publicSwapKey, ethDepositKey) {
+Key.validateEthDepositKey = function (publicSwapKey, ethDepositKey) {
   if (!publicSwapKey) return false;
   if (typeof publicSwapKey !== 'object') try {
     publicSwapKey = JSON.parse(publicSwapKey);
@@ -121,4 +121,4 @@ Swap.validateEthDepositKey = function (publicSwapKey, ethDepositKey) {
   return Deriver.validateSecureDepositNode(publicSwapKey, ethDepositKey);
 }
 
-module.exports = Swap;
+module.exports = Key;

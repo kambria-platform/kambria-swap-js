@@ -4,6 +4,10 @@ var bech32 = require('bech32');
 
 var Util = function () { }
 
+Util.padHex = function (string) {
+  return ethUtil.addHexPrefix(string);
+}
+
 Util.unpadHex = function (hex) {
   if (!hex) return null;
   if (Buffer.isBuffer(hex)) hex = hex.toString('hex');
