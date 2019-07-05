@@ -11,23 +11,23 @@ var key = require('../key');
  * Option details
  * 
  * ethOpts = {
- *  network: _,
+ *  network: <number>,
  *  token: {
- *    address: _,
- *    decimals: _
+ *    address: <string>,
+ *    decimals: <number>
  *  },
- *  minimum: _
+ *  minimum: <number>
  * }
  * 
  * bnbOpts = {
- *  network: _,
+ *  network: <string>,
  *  token: {
- *    denom: _,
- *    decimals: _
+ *    denom: <string>,
+ *    decimals: <number>
  *  },
  *  coinbase: {
- *    address: _,
- *    privKey: _
+ *    address: <string>,
+ *    privKey: <string>
  *  }
  * }
  */
@@ -43,6 +43,42 @@ class Swap {
     this.ethOpts.token.decimals = new BN('1' + '0'.repeat(ethOpts.token.decimals));
     this.bnbOpts.token.decimals = new BN('1' + '0'.repeat(bnbOpts.token.decimals));
     this.ethOpts.minimum = new BN(ethOpts.minimum ? ethOpts.minimum : 0);
+
+    if (this.publicSwapkey.network != this.ethOpts.network) throw new Error('Different netowrks between Public swap key and ETH options');
+    if (this.ethOpts.network == 1 && this.bnbOpts.network != 'mainnet') throw new Error('Cannot pair mainnet and testnet');
+    if (this.ethOpts.network != 1 && this.bnbOpts.network == 'mainnet') throw new Error('Cannot pair mainnet and testnet');
+
+    // Temp storage
+    this.bnbClient = null;
+  }
+
+  getBnbClient = () => {
+    return new Promise((resolve, reject) => {
+      if (this.bnbClient) return resolve(this.bnbClient);
+      let bnbClient = new BnbApiClient(getBnbRPC(this.bnbOpts.network));
+      bnbClient.chooseNetwork(this.bnbOpts.network);
+      bnbClient.setPrivateKey(this.bnbOpts.coinbase.privKey).then(() => {
+        return bnbClient.initChain();
+      }).then(() => {
+        this.bnbClient = { api: bnbClient, core: BnbApiClient };
+        return resolve(this.bnbClient);
+      }).catch(er => {
+        return reject(er);
+      });
+    });
+  }
+
+  /**
+   * Simple replay attack protection
+   * EIP155: https://github.com/ethereum/EIPs/blob/master/EIPS/eip-155.md
+   */
+  getReplayedNetwork = (ethTx) => {
+    if (!ethTx || !ethTx.v) return false;
+    let v = parseInt(ethTx.v);
+
+    if (!v) return false;
+    if (v % 2 == 1) return (v - 35) / 2;
+    else return (v - 36) / 2;
   }
 
   swap = (ethTxId, ethDepositKey) => {
@@ -53,12 +89,16 @@ class Swap {
       let providerEngine = new Web3.providers.HttpProvider(getEthRPC(this.ethOpts.network));
       let web3 = new Web3(providerEngine);
       const ethTx = web3.eth.getTransaction(ethTxId);
-      // Check token transaction
+
+      // Check replayed network
+      let replayedNetwork = this.getReplayedNetwork(ethTx);
+      if (!replayedNetwork || replayedNetwork != this.ethOpts.network) reject('The transaction is incorrect network');
+      // Check type of transaction
       if (!ethTx) return reject('The transaction is not confirmed');
       if (!ethTx.input) return reject('The transaction is not transfer transaction');
       // Check type of token
       if (ethTx.to != this.ethOpts.token.address.toLowerCase()) return reject('The transaction transfers incorrect type of token');
-      // Check type of transaction
+      // Check type of called function
       let sig = ethTx.input.slice(0, 10);
       if (sig != '0xa9059cbb') return reject('The transaction is not transfer transaction');
       // Check deposit address
@@ -70,15 +110,11 @@ class Swap {
       let rawAmount = decode[1].div(this.ethOpts.token.decimals);
       if (rawAmount.lt(this.ethOpts.minimum)) return reject('Deposit amount unmets the minimum.');
 
-      let bnbClient = new BnbApiClient(getBnbRPC(this.bnbOpts.network));
-      bnbClient.chooseNetwork(this.bnbOpts.network);
-      bnbClient.setPrivateKey(this.bnbOpts.coinbase.privKey).then(() => {
-        return bnbClient.initChain();
-      }).then(() => {
+      this.getBnbClient().then((bnbClient) => {
         // Check coinbase
-        if (BnbApiClient.crypto.getAddressFromPrivateKey(this.bnbOpts.coinbase.privKey) != this.bnbOpts.coinbase.address) return reject('Invalid Binance coinbase');
+        if (bnbClient.core.crypto.getAddressFromPrivateKey(this.bnbOpts.coinbase.privKey) != this.bnbOpts.coinbase.address) return reject('Invalid Binance coinbase');
 
-        return bnbClient.transfer(
+        return bnbClient.api.transfer(
           this.bnbOpts.coinbase.address,
           ethDepositKey.bnbAddress,
           rawAmount.toNumber(),
