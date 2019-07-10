@@ -86,9 +86,11 @@ Key.generateEthDepositKey = function (publicSwapKey, bnbAddr) {
   } catch (er) { if (er) return new Error('Invalid public swap key'); }
 
   let { publicKey, chainCode } = publicSwapKey;
+  let prefix = 'bnb';
+  if (publicSwapKey.network !== 1) prefix = 'tbnb';
   if (!publicKey || typeof publicKey !== 'string') return new Error('Invalid public swap key');
   if (!chainCode || typeof chainCode !== 'string') return new Error('Invalid public swap key');
-  if (!util.isValidBnbAddress(bnbAddr)) return new Error('Invalid BNB address');
+  if (!util.isValidBnbAddress(bnbAddr, prefix)) return new Error('Invalid BNB address');
 
   return Deriver.generateSecureDepositNode(publicSwapKey, bnbAddr);
 }

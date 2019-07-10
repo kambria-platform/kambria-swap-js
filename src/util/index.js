@@ -79,11 +79,16 @@ Util.isValidEthAddress = function (ethAddr) {
   return ethUtil.isValidAddress(ethAddr);
 }
 
-Util.isValidBnbAddress = function (bnbAddr) {
+Util.isValidBnbAddress = function (bnbAddr, prefix) {
   try {
     let decode = bech32.decode(bnbAddr);
     if (!decode || !decode.prefix || !decode.words) throw new Error('Invalid BNB address');
-    if (decode.prefix !== 'tbnb' && decode.prefix !== 'bnb') throw new Error('Invalid BNB address');
+    if (prefix) {
+      if (decode.prefix !== prefix) throw new Error('Invalid BNB address');
+    }
+    else {
+      if (decode.prefix !== 'tbnb' && decode.prefix !== 'bnb') throw new Error('Invalid BNB address');
+    }
     if (decode.words.length !== 32) throw new Error('Invalid BNB address');
   } catch (er) {
     if (er) return false;
