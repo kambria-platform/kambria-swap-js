@@ -33,18 +33,18 @@ var key = require('../key');
  */
 
 class Swap {
-  constructor(publicSwapkey, ethOpts, bnbOpts) {
+  constructor(publicSwapKey, ethOpts, bnbOpts) {
     if (!validator.validateEthOpts(ethOpts)) throw new Error('Invalid Ethereum options');
     if (!validator.validateBnbOpts(bnbOpts)) throw new Error('Invalid Binance options');
 
-    this.publicSwapkey = JSON.parse(JSON.stringify(publicSwapkey));
+    this.publicSwapKey = JSON.parse(JSON.stringify(publicSwapKey));
     this.ethOpts = JSON.parse(JSON.stringify(ethOpts));
     this.bnbOpts = JSON.parse(JSON.stringify(bnbOpts));
     this.ethOpts.token.decimals = new BN('1' + '0'.repeat(ethOpts.token.decimals));
     this.bnbOpts.token.decimals = new BN('1' + '0'.repeat(bnbOpts.token.decimals));
     this.ethOpts.minimum = new BN(ethOpts.minimum ? ethOpts.minimum : 0);
 
-    if (this.publicSwapkey.network != this.ethOpts.network) throw new Error('Different netowrks between Public swap key and ETH options');
+    if (this.publicSwapKey.network != this.ethOpts.network) throw new Error('Different netowrks between Public swap key and ETH options');
     if (this.ethOpts.network == 1 && this.bnbOpts.network != 'mainnet') throw new Error('Cannot pair mainnet and testnet');
     if (this.ethOpts.network != 1 && this.bnbOpts.network == 'mainnet') throw new Error('Cannot pair mainnet and testnet');
 
@@ -84,7 +84,7 @@ class Swap {
   swap = (ethTxId, ethDepositKey) => {
     return new Promise((resolve, reject) => {
       if (!ethTxId) return reject('Invalid Ethereum transaction hash');
-      if (!ethDepositKey || !key.validateEthDepositKey(this.publicSwapkey, ethDepositKey)) return reject('Invalid ETH deposit key');
+      if (!ethDepositKey || !key.validateEthDepositKey(this.publicSwapKey, ethDepositKey)) return reject('Invalid ETH deposit key');
 
       let providerEngine = new Web3.providers.HttpProvider(getEthRPC(this.ethOpts.network));
       let web3 = new Web3(providerEngine);
@@ -112,7 +112,9 @@ class Swap {
 
       this.getBnbClient().then((bnbClient) => {
         // Check coinbase
-        if (bnbClient.core.crypto.getAddressFromPrivateKey(this.bnbOpts.coinbase.privKey) != this.bnbOpts.coinbase.address) return reject('Invalid Binance coinbase');
+        let prefix = 'bnb';
+        if (this.publicSwapKey.network !== 1) prefix = 'tbnb';
+        if (bnbClient.core.crypto.getAddressFromPrivateKey(this.bnbOpts.coinbase.privKey, prefix) != this.bnbOpts.coinbase.address) return reject('Invalid Binance coinbase');
 
         return bnbClient.api.transfer(
           this.bnbOpts.coinbase.address,
