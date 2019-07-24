@@ -92,7 +92,7 @@ class Swap {
 
       // Check replayed network
       let replayedNetwork = this.getReplayedNetwork(ethTx);
-      if (!replayedNetwork || replayedNetwork != this.ethOpts.network) reject('The transaction is incorrect network');
+      if (!replayedNetwork || replayedNetwork != this.ethOpts.network) return reject('The transaction is incorrect network');
       // Check type of transaction
       if (!ethTx) return reject('The transaction is not confirmed');
       if (!ethTx.input) return reject('The transaction is not transfer transaction');
