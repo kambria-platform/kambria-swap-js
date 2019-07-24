@@ -68,19 +68,6 @@ class Swap {
     });
   }
 
-  /**
-   * Simple replay attack protection
-   * EIP155: https://github.com/ethereum/EIPs/blob/master/EIPS/eip-155.md
-   */
-  getReplayedNetwork = (ethTx) => {
-    if (!ethTx || !ethTx.v) return false;
-    let v = parseInt(ethTx.v);
-
-    if (!v) return false;
-    if (v % 2 == 1) return (v - 35) / 2;
-    else return (v - 36) / 2;
-  }
-
   swap = (ethTxId, ethDepositKey) => {
     return new Promise((resolve, reject) => {
       if (!ethTxId) return reject('Invalid Ethereum transaction hash');
@@ -90,9 +77,6 @@ class Swap {
       let web3 = new Web3(providerEngine);
       const ethTx = web3.eth.getTransaction(ethTxId);
 
-      // Check replayed network
-      let replayedNetwork = this.getReplayedNetwork(ethTx);
-      if (!replayedNetwork || replayedNetwork != this.ethOpts.network) return reject('The transaction is incorrect network');
       // Check type of transaction
       if (!ethTx) return reject('The transaction is not confirmed');
       if (!ethTx.input) return reject('The transaction is not transfer transaction');
