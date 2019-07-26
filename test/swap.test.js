@@ -1,5 +1,4 @@
 var { Key, Swap } = require('../index.js');
-var BN = require('bn.js');
 
 const { bnbAddress, publicSwapKey, ethOpts, bnbOpts, depositTx } = require('./params');
 
