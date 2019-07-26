@@ -76,6 +76,7 @@ class Swap {
       let providerEngine = new Web3.providers.HttpProvider(getEthRPC(this.ethOpts.network));
       let web3 = new Web3(providerEngine);
       const ethTx = web3.eth.getTransaction(ethTxId);
+      const currentBlockNumner = web3.eth.blockNumber;
 
       // Check type of transaction
       if (!ethTx) return reject('The transaction is not confirmed');
@@ -85,6 +86,9 @@ class Swap {
       // Check type of called function
       let sig = ethTx.input.slice(0, 10);
       if (sig != '0xa9059cbb') return reject('The transaction is not transfer transaction');
+      // Check confimation
+      let confirmedBlockNumber = ethTx.blockNumber;
+      if (currentBlockNumner - confirmedBlockNumber <= 6) return reject('The transaction is not confirmed enough');
       // Check deposit address
       let encode = ethTx.input.slice(10);
       let decode = abi.rawDecode(['address', 'uint256'], Buffer.from(encode, 'hex'));
