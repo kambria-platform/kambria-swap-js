@@ -16,6 +16,7 @@ var key = require('../key');
  *    address: <string>,
  *    decimals: <number>
  *  },
+ *  confirmation: <number>
  *  minimum: <number>
  * }
  * 
@@ -88,7 +89,7 @@ class Swap {
       if (sig != '0xa9059cbb') return reject('The transaction is not transfer transaction');
       // Check confimation
       let confirmedBlockNumber = ethTx.blockNumber;
-      if (currentBlockNumner - confirmedBlockNumber <= 6) return reject('The transaction is not confirmed enough');
+      if (currentBlockNumner - confirmedBlockNumber < this.ethOpts.confirmation) return reject('The transaction is not confirmed enough');
       // Check deposit address
       let encode = ethTx.input.slice(10);
       let decode = abi.rawDecode(['address', 'uint256'], Buffer.from(encode, 'hex'));
