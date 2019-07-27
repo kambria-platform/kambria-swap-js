@@ -12,6 +12,7 @@ module.exports = {
       address: '0x9dddff7752e1714c99edf940ae834f0d57d68546',
       decimals: 18
     },
+    confirmation: 12,
     minimum: 1000
   },
   bnbOpts: {
