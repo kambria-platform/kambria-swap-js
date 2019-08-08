@@ -11,9 +11,10 @@ describe('Swap library', function () {
       let swap = new Swap(publicSwapKey, ethOpts, bnbOpts);
       let ethDepositKey = Key.generateEthDepositKey(publicSwapKey, bnbAddress);
       swap.swap(depositTx, ethDepositKey).then(re => {
+        console.log(re);
         return done();
       }).catch(er => {
-        return done(er);
+        return done(er.response.data);
       });
     });
   });

@@ -29,12 +29,17 @@ var key = require('../key');
  *  coinbase: {
  *    address: <string>,
  *    privKey: <string>
+ *  },
+ *  interest: {
+ *    type: <string>,
+ *    value: <number>
  *  }
  * }
  */
 
 class Swap {
   constructor(publicSwapKey, ethOpts, bnbOpts) {
+    if (!bnbOpts.interest) bnbOpts.interest = { type: 'fixed', value: 0 }
     if (!validator.validateEthOpts(ethOpts)) throw new Error('Invalid Ethereum options');
     if (!validator.validateBnbOpts(bnbOpts)) throw new Error('Invalid Binance options');
 
@@ -98,6 +103,15 @@ class Swap {
       // Check deposit amount
       let rawAmount = decode[1].div(this.ethOpts.token.decimals);
       if (rawAmount.lt(this.ethOpts.minimum)) return reject('Deposit amount unmets the minimum.');
+      // Calculate interest amount
+      let bonusAmount = 0;
+      if (this.bnbOpts.interest.type == 'fixed') {
+        bonusAmount = new BN(this.bnbOpts.interest.value);
+      }
+      else if (this.bnbOpts.interest.type == 'dynamic') {
+        bonusAmount = rawAmount.mul(new BN(this.bnbOpts.interest.value)).div(new BN(100));
+      }
+      else bonusAmount = new BN(0);
 
       this.getBnbClient().then((bnbClient) => {
         // Check coinbase
@@ -105,13 +119,28 @@ class Swap {
         if (this.publicSwapKey.network !== 1) prefix = 'tbnb';
         if (bnbClient.core.crypto.getAddressFromPrivateKey(this.bnbOpts.coinbase.privKey, prefix) != this.bnbOpts.coinbase.address) return reject('Invalid Binance coinbase');
 
-        return bnbClient.api.transfer(
+        if (!bonusAmount || bonusAmount.isZero()) return bnbClient.api.transfer(
           this.bnbOpts.coinbase.address,
           ethDepositKey.bnbAddress,
           rawAmount.toNumber(),
           this.bnbOpts.token.denom,
           `Swap ${ethDepositKey.ethAddress} ${ethTxId}`
         );
+
+        return bnbClient.api.multiSend(
+          this.bnbOpts.coinbase.address,
+          [
+            {
+              to: ethDepositKey.bnbAddress,
+              coins: [{ denom: 'KATT1-C26', amount: rawAmount.toNumber() }]
+            },
+            {
+              to: ethDepositKey.bnbAddress,
+              coins: [{ denom: 'KATT1-C26', amount: bonusAmount.toNumber() }]
+            }
+          ],
+          `Swap ${ethDepositKey.ethAddress} ${ethTxId}`
+        )
       }).then(re => {
         return resolve({
           ethTx: {
@@ -124,7 +153,8 @@ class Swap {
             hash: re.result[0].hash.toLowerCase(),
             from: this.bnbOpts.coinbase.address,
             to: ethDepositKey.bnbAddress,
-            amount: rawAmount.mul(this.bnbOpts.token.decimals)
+            amount: rawAmount.mul(this.bnbOpts.token.decimals),
+            interest: bonusAmount.mul(this.bnbOpts.token.decimals)
           }
         });
       }).catch(er => {
