@@ -33,6 +33,22 @@ Validator.validateBnbOpts = (bnbOpts) => {
   if (!bnbOpts.coinbase) return false;
   if (!bnbOpts.coinbase.address) return false;
   if (!bnbOpts.coinbase.privKey) return false;
+  // Interest check
+  if (!bnbOpts.interest) return false;
+  if (!bnbOpts.interest.type) return false;
+  if (bnbOpts.interest.type == 'fixed') {
+    if (typeof bnbOpts.interest.value != 'number') return false;
+    if (bnbOpts.interest.value < 0) return false;
+  }
+  else if (bnbOpts.interest.type == 'dynamic') {
+    if (typeof bnbOpts.interest.value != 'number') return false;
+    if (bnbOpts.interest.value < 0) return false;
+    if (bnbOpts.interest.value > 100) return false;
+    if (bnbOpts.interest.value % 1) return false; // Must be integer
+  }
+  else {
+    return false;
+  }
   // Valid
   return true;
 }
