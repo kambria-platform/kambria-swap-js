@@ -14,7 +14,7 @@ describe('Swap library', function () {
         console.log(re);
         return done();
       }).catch(er => {
-        return done(er.response.data);
+        return done(er);
       });
     });
   });
