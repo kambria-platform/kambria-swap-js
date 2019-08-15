@@ -82,8 +82,12 @@ class Swap {
       let providerEngine = new Web3.providers.HttpProvider(getEthRPC(this.ethOpts.network));
       let web3 = new Web3(providerEngine);
       const ethTx = web3.eth.getTransaction(ethTxId);
+      const ethTxReceipt = web3.eth.getTransactionReceipt(ethTxId);
       const currentBlockNumner = web3.eth.blockNumber;
 
+      // Check status
+      if (!ethTxReceipt || !ethTxReceipt.status) return reject('The transaction is not confirmed');
+      if (ethTxReceipt.status != '0x1') return reject('The transaction is reverted');
       // Check type of transaction
       if (!ethTx) return reject('The transaction is not confirmed');
       if (!ethTx.input) return reject('The transaction is not transfer transaction');
