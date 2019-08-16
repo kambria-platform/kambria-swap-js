@@ -27,7 +27,7 @@
   },
   "homepage": "https://github.com/kambria-platform/kambria-swap-js#readme",
   "dependencies": {
-    "@binance-chain/javascript-sdk": "^2.14.0",
+    "@binance-chain/javascript-sdk": "^2.14.6",
     "bech32": "^1.1.3",
     "bip39": "^3.0.2",
     "bn.js": "^4.11.8",

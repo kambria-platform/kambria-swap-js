@@ -136,11 +136,11 @@ class Swap {
           [
             {
               to: ethDepositKey.bnbAddress,
-              coins: [{ denom: 'KATT1-C26', amount: rawAmount.toNumber() }]
+              coins: [{ denom: this.bnbOpts.token.denom, amount: rawAmount.toNumber() }]
             },
             {
               to: ethDepositKey.bnbAddress,
-              coins: [{ denom: 'KATT1-C26', amount: bonusAmount.toNumber() }]
+              coins: [{ denom: this.bnbOpts.token.denom, amount: bonusAmount.toNumber() }]
             }
           ],
           `Swap ${ethDepositKey.ethAddress} ${ethTxId}`
